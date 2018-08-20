@@ -29,7 +29,7 @@ class MainActivity : AppCompatActivity() {
 
         try {
             //Open a random port to send the package
-            clientSocket.broadcast
+            clientSocket.broadcast.and(true)
             startListenForUDPBroadcast()
         } catch (ex: IOException) {
             Log.e("Error", "IOException: $ex")
@@ -74,7 +74,6 @@ class MainActivity : AppCompatActivity() {
                 val port = 11111
 
                 while (shouldRestartSocketListen) {
-                    println("while($shouldRestartSocketListen)")
                     listenAndWaitAndThrowIntent(broadcastIP, port)
                 }
 
@@ -91,9 +90,9 @@ class MainActivity : AppCompatActivity() {
 
         val receiveBuf = ByteArray(15000)
 
-        if (clientSocket == null || clientSocket.isClosed) {
+        if (clientSocket.isClosed) {
             clientSocket = DatagramSocket(port, broadcastIP)
-            clientSocket.broadcast
+            clientSocket.broadcast.and(true)
         }
 
         val receivePacket = DatagramPacket(receiveBuf, receiveBuf.size)
