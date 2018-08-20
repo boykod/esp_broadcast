@@ -1,5 +1,6 @@
 package com.example.forest.espbroadcast
 
+import android.graphics.Color
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
@@ -18,13 +19,16 @@ import java.net.InetAddress
 
 class MainActivity : AppCompatActivity() {
 
-    private val clientSocket = DatagramSocket()
+    private var clientSocket = DatagramSocket()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        device_recycler_view.layoutManager = LinearLayoutManager(this)
+
         try {
+            //Open a random port to send the package
             clientSocket.broadcast
             startListenForUDPBroadcast()
         } catch (ex: IOException) {
@@ -64,42 +68,46 @@ class MainActivity : AppCompatActivity() {
     //Listen for Broadcast
     private fun startListenForUDPBroadcast() {
 
-        Thread(Runnable {
-            this@MainActivity.runOnUiThread(java.lang.Runnable {
-                try {
-                    val broadcastIP = InetAddress.getByName("0.0.0.0")
-                    val port = 11111
+        runOnUiThread {
+            try {
+                val broadcastIP = InetAddress.getByName("0.0.0.0")
+                val port = 11111
 
-                    while (true) {
-                        listenAndWaitAndThrowIntent(broadcastIP, port)
-                    }
-                } catch (e: Exception){
-                    Log.e("Error", "Exception: $e")
+                while (shouldRestartSocketListen) {
+                    println("while($shouldRestartSocketListen)")
+                    listenAndWaitAndThrowIntent(broadcastIP, port)
                 }
-            })
-        }).start()
+
+            } catch (e: Exception){
+                Log.i("UDP", "no longer listening for UDP broadcasts cause of error "
+                        + e.message)
+            }
+        }
     }
+
+    private val shouldRestartSocketListen: Boolean = true
 
     private fun listenAndWaitAndThrowIntent(broadcastIP: InetAddress, port: Int) {
 
         val receiveBuf = ByteArray(15000)
 
-        var clientSocket = DatagramSocket()
-
-        if (clientSocket.isClosed) {
+        if (clientSocket == null || clientSocket.isClosed) {
             clientSocket = DatagramSocket(port, broadcastIP)
             clientSocket.broadcast
         }
 
-        val packet = DatagramPacket(receiveBuf, receiveBuf.size)
+        val receivePacket = DatagramPacket(receiveBuf, receiveBuf.size)
 
         Log.e("UDP", "Waiting for UDP broadcast")
-        clientSocket.receive(packet)
+
+        clientSocket.receive(receivePacket)
+
+        println("receive")
 
 
 
-        var senderIP = packet.address.hostName
-        var message = String(packet.data).trim()
+        var senderIP = receivePacket.address.hostName
+        var message = String(receivePacket.data).trim()
 
         println("IP: " + senderIP.toString())
         println("message: $message")
