@@ -31,5 +31,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.android.support:recyclerview-v7:27.1.1'
+
+    //third part library
     implementation 'com.google.code.gson:gson:2.8.5'
+
+    //anko
+    implementation "org.jetbrains.anko:anko:$anko_version"
 }
