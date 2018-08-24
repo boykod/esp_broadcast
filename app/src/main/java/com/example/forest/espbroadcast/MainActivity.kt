@@ -14,12 +14,15 @@ import com.example.forest.espbroadcast.Adapter.DeviceAdapter
 import com.example.forest.espbroadcast.TouchListener.RecyclerViewItemTouchListener
 import com.google.gson.GsonBuilder
 import com.google.gson.annotations.SerializedName
+import io.reactivex.Observable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.*
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
 
@@ -54,6 +57,9 @@ class MainActivity : AppCompatActivity() {
         } catch (ex: IOException) {
             Log.e("Error", "IOException: $ex")
         }
+
+        Observable.interval(2, TimeUnit.SECONDS, Schedulers.io())
+                .subscribe { sendBroadcast("RxJava message") }
 
     }
 
@@ -109,9 +115,6 @@ class MainActivity : AppCompatActivity() {
 
     // Send Package
     private fun sendBroadcast(msg: String) {
-        val policy = StrictMode.ThreadPolicy.Builder().permitAll().build()
-        StrictMode.setThreadPolicy(policy)
-
         val sendData = msg.toByteArray(Charsets.UTF_8)
         val address = InetAddress.getByName("255.255.255.255")
         val sendPackage = DatagramPacket(sendData, sendData.size, address, 1234)
