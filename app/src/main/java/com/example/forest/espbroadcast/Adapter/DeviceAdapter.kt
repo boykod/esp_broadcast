@@ -4,29 +4,37 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import com.example.forest.espbroadcast.JsonDataModel
 import com.example.forest.espbroadcast.R
-import kotlinx.android.synthetic.main.davice_raw.view.*
 
-class DeviceAdapter: RecyclerView.Adapter<CustomViewHolder>() {
+class DeviceAdapter(jsonData: ArrayList<JsonDataModel>): RecyclerView.Adapter<CustomViewHolder>() {
+
+    private var mJsonData: ArrayList<JsonDataModel> = jsonData
 
     override fun getItemCount(): Int {
-        return 20
+        return if (!mJsonData.isEmpty()) mJsonData.size else 0
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CustomViewHolder {
-        val layoutInflater = LayoutInflater.from(parent.context)
-        val callForRaw = layoutInflater.inflate(R.layout.davice_raw, parent, false)
-        return CustomViewHolder(callForRaw)
+        return CustomViewHolder(LayoutInflater.from(parent.context)
+                .inflate(R.layout.davice_raw, parent,false))
     }
 
     override fun onBindViewHolder(holder: CustomViewHolder, position: Int) {
-        holder.view.tv_ip.text = "192.168.0.101"
-        holder.view.tv_name.text = "ESP Smart house"
+        holder.bind(mJsonData[position])
     }
 
 }
 
 class CustomViewHolder(val view: View): RecyclerView.ViewHolder(view) {
 
+    private val tvName : TextView by lazy { view.findViewById<TextView>(R.id.tv_name) }
+    private val tvIp : TextView by lazy { view.findViewById<TextView>(R.id.tv_ip) }
+
+    fun bind (data: JsonDataModel) {
+        tvName.text = data.data.name
+        tvIp.text = data.data.ip
+    }
 }
 

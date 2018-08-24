@@ -1,30 +1,25 @@
 package com.example.forest.espbroadcast
 
-import android.content.Intent
-import android.os.AsyncTask
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Looper
 import android.os.StrictMode
 import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.util.JsonReader
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.webkit.WebView
+import android.widget.Toast
 import com.example.forest.espbroadcast.Adapter.DeviceAdapter
 import com.example.forest.espbroadcast.TouchListener.RecyclerViewItemTouchListener
-import com.example.forest.espbroadcast.WebView.WebActivity
 import com.google.gson.GsonBuilder
+import com.google.gson.annotations.SerializedName
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.*
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
-import java.text.FieldPosition
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,14 +30,14 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         device_recycler_view.layoutManager = LinearLayoutManager(this)
-        device_recycler_view.adapter = DeviceAdapter()
         device_recycler_view.addOnItemTouchListener(RecyclerViewItemTouchListener(this,
                 device_recycler_view,
                 object : RecyclerViewItemTouchListener.ClickListener {
                     override fun onClick(view: View, position: Int) {
                         println("Press on $position")
 
-                        startActivity(Intent(this@MainActivity, WebActivity::class.java))
+                        Toast.makeText(this@MainActivity, "$position", Toast.LENGTH_SHORT).show()
+
                     }
 
                     override fun onLongClick(view: View, position: Int) {
@@ -82,7 +77,7 @@ class MainActivity : AppCompatActivity() {
 
         if (clientSocket == null || clientSocket.isClosed) {
             clientSocket = DatagramSocket(port, broadcastIP)
-            clientSocket.broadcast
+            clientSocket.broadcast = true
         }
 
         val receivePacket = DatagramPacket(receiveBuf, receiveBuf.size)
@@ -92,13 +87,23 @@ class MainActivity : AppCompatActivity() {
         clientSocket.receive(receivePacket)
 
         var senderIP = receivePacket.address
-        var message = String(receivePacket.data).trim()
-
-        var gson = GsonBuilder().setLenient().create()
-//        var data = gson.fromJson(message, MessageObj::class.java)
+        var message = String(receivePacket.data).trim{it <= '?'}
 
         println("IP: " + senderIP.toString())
-        println("message: $message")
+//        println("message: $message")
+
+        var gsonInstance = GsonBuilder().create()
+        var response = gsonInstance.fromJson(message, JsonDataModel::class.java)
+
+        var array: ArrayList<JsonDataModel> = ArrayList()
+        array.addAll(listOf(response))
+
+        println("response: "+ response.data)
+
+        runOnUiThread {
+            device_recycler_view.adapter = DeviceAdapter(array)
+        }
+
 
     }
 
@@ -150,6 +155,20 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-class MessageObj(var message: List<InputObject>)
+data class JsonDataModel(
+        @SerializedName("data")
+        var data: Data
+)
 
-class InputObject(var ip: String, var port: Int, var name: String, var chopId: Int, var flashId: Int)
+data class Data (
+        @SerializedName("ip")
+        var ip: String,
+        @SerializedName("port")
+        var port: Int,
+        @SerializedName("name")
+        var name: String,
+        @SerializedName("chipId")
+        var chipId: String,
+        @SerializedName("flashId")
+        var flashId: String
+)
